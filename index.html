@@ -23,6 +23,7 @@ input,select{width:100%;padding:12px;border:1px solid #d7dbe1;border-radius:11px
 .deadline{margin-top:12px;padding:13px 12px 11px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:15px}.deadline-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:8px}.deadline-head b{font-size:15px;color:#111827}.deadline-count{font-size:24px;font-weight:900;line-height:1.05;margin-bottom:9px}.deadline-count small{font-size:12px;font-weight:700;color:var(--muted)}
 .bar{height:15px;background:#e5e7eb;border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 2px #00000012}.bar>i{display:block;height:100%;border-radius:99px;background:#16a34a;transition:width .4s}.bar.warn>i{background:#d97706}.bar.danger>i{background:#dc2626}.bar.over>i{background:#7f1d1d}
 .deadline-scale{display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;margin-top:6px}.deadline-percent{text-align:right;font-size:11px;font-weight:800;margin-top:5px;color:#6b7280}
+.calendar-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.calendar-nav{display:flex;gap:6px}.calendar-nav button{padding:8px 11px}.calendar-title{font-size:17px;font-weight:800}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal-weekday{text-align:center;font-size:10px;font-weight:800;color:#9ca3af;padding:4px 0}.cal-day{min-height:72px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:11px;padding:5px;overflow:hidden;transition:.15s}.cal-day.empty{background:transparent;border-color:transparent}.cal-day.today{border:2px solid #111827}.cal-day.drop-target{background:#eef6ff;border-color:#2563eb;transform:scale(1.02)}.cal-num{font-size:11px;font-weight:800;color:#6b7280;margin-bottom:3px}.cal-task{display:block;background:#111827;color:white;border-radius:6px;padding:3px 4px;margin:2px 0;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:grab}.cal-task.done{opacity:.45;text-decoration:line-through}.unscheduled{display:flex;gap:7px;overflow:auto;padding:4px 1px 8px}.unscheduled .task-chip{flex:0 0 auto;background:#eef0f3;color:#111827;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:grab;border:1px solid #dfe3e8}.unscheduled .task-chip:active,.cal-task:active{cursor:grabbing}.calendar-help{font-size:12px;color:var(--muted);margin-top:8px}.touch-ghost{position:fixed;z-index:9999;pointer-events:none;background:#111827;color:white;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700;box-shadow:0 8px 25px #0004;transform:translate(-50%,-50%)}
 
 .modal{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;justify-content:center;padding:12px}.modal.show{display:flex}.sheet{width:min(720px,100%);background:white;border-radius:22px;padding:18px;max-height:90vh;overflow:auto}.row{display:flex;gap:8px;margin-top:14px}.row>*{flex:1}
 @media(min-width:700px){.modal{align-items:center}.sheet{max-height:80vh}}
@@ -35,6 +36,13 @@ input,select{width:100%;padding:12px;border:1px solid #d7dbe1;border-radius:11px
 <div class="card">
 <h2>Dein Überblick</h2>
 <div class="stats"><div class="stat"><b id="openCount">0</b><span>offen</span></div><div class="stat"><b id="urgentCount">0</b><span>dringend</span></div><div class="stat"><b id="timeCount">0</b><span>Min. offen</span></div></div>
+</div>
+
+<div class="card">
+<div class="calendar-head"><div class="calendar-title" id="calendarTitle"></div><div class="calendar-nav"><button class="secondary" onclick="changeMonth(-1)">‹</button><button class="secondary" onclick="changeMonth(1)">›</button></div></div>
+<div id="calendarGrid"></div>
+<div class="calendar-help">Ziehe eine Aufgabe auf einen Tag, um festzulegen, wann du sie erledigen möchtest.</div>
+<div id="unscheduledWrap"></div>
 </div>
 
 <div class="card">
@@ -59,9 +67,7 @@ input,select{width:100%;padding:12px;border:1px solid #d7dbe1;border-radius:11px
 <div class="sheet">
 <h2>Aufgabe wirklich löschen?</h2>
 <div class="sub" id="deleteQuestion">Diese Aufgabe wird dauerhaft entfernt.</div>
-<label>Zur Bestätigung den Aufgabentitel eingeben:</label>
-<input id="deleteConfirmText" autocomplete="off" placeholder="Aufgabentitel eingeben">
-<div class="row"><button class="secondary" onclick="closeDeleteModal()">Abbrechen</button><button id="deleteFinal" disabled onclick="confirmDelete()">Endgültig löschen</button></div>
+<div class="row"><button class="secondary" onclick="closeDeleteModal()">Abbrechen</button><button id="deleteFinal" onclick="confirmDelete()">Löschen</button></div>
 </div>
 </div>
 
@@ -72,6 +78,7 @@ input,select{width:100%;padding:12px;border:1px solid #d7dbe1;border-radius:11px
 <div class="grid">
 <div><label>Priorität</label><select id="fPriority"><option value="A">A – wichtig & dringend</option><option value="B" selected>B – wichtig</option><option value="C">C – kann warten</option></select></div>
 <div><label>Dauer (Minuten)</label><input id="fDuration" type="number" min="5" value="30"></div>
+<div><label>Erledigen am</label><input id="fPlanned" type="date"></div>
 <div><label>Frist</label><input id="fDue" type="date"></div>
 <div><label>Kategorie</label><select id="fCategory"><option>Privat</option><option>Haushalt</option><option>Arbeit</option><option>Finanzen</option><option>Termine</option><option>Sonstiges</option></select></div>
 </div>
@@ -82,6 +89,8 @@ input,select{width:100%;padding:12px;border:1px solid #d7dbe1;border-radius:11px
 <script>
 const KEY='mein-aufgabenplaner-v1';
 let tasks=JSON.parse(localStorage.getItem(KEY)||'[]'), filter='all';
+let calendarDate=new Date(); calendarDate.setDate(1);
+let touchDragId=null, touchGhost=null;
 const today=new Date(); today.setHours(0,0,0,0);
 document.getElementById('date').textContent=today.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});
 function save(){localStorage.setItem(KEY,JSON.stringify(tasks));render()}
@@ -108,11 +117,49 @@ function deadlineHTML(t){
  </div>`;
 }
 
+function monthKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function fmtMonth(d){return d.toLocaleDateString('de-DE',{month:'long',year:'numeric'})}
+function isoDate(y,m,day){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(day).padStart(2,'0')}
+function plannedText(t){if(!t.planned)return '';return new Date(t.planned+'T12:00').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}
+function renderCalendar(){
+ const grid=document.getElementById('calendarGrid'), y=calendarDate.getFullYear(), m=calendarDate.getMonth();
+ document.getElementById('calendarTitle').textContent=fmtMonth(calendarDate);
+ const first=new Date(y,m,1), start=(first.getDay()+6)%7, last=new Date(y,m+1,0).getDate();
+ let html='<div class="calendar-grid">';
+ ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(x=>html+='<div class="cal-weekday">'+x+'</div>');
+ for(let i=0;i<start;i++) html+='<div class="cal-day empty"></div>';
+ for(let day=1;day<=last;day++){
+   const iso=isoDate(y,m,day), d=new Date(y,m,day);
+   const isToday=d.getTime()===today.getTime();
+   const dayTasks=tasks.filter(t=>t.planned===iso);
+   html+='<div class="cal-day '+(isToday?'today':'')+'" data-date="'+iso+'" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropTask(event,\''+iso+'\')" ontouchmove="touchCalendarMove(event)" ontouchend="touchCalendarDrop(event,\''+iso+'\')">';
+   html+='<div class="cal-num">'+day+'</div>';
+   dayTasks.forEach(t=>html+='<div class="cal-task '+(t.done?'done':'')+'" draggable="true" data-task-id="'+t.id+'" ondragstart="dragStart(event,\''+t.id+'\')">'+esc(t.title)+'</div>');
+   html+='</div>';
+ }
+ html+='</div>'; grid.innerHTML=html;
+ const uns=tasks.filter(t=>!t.planned&&!t.done);
+ document.getElementById('unscheduledWrap').innerHTML=uns.length?'<div class="calendar-help">Noch nicht eingeplant:</div><div class="unscheduled">'+uns.map(t=>'<div class="task-chip" draggable="true" data-task-id="'+t.id+'" ondragstart="dragStart(event,\''+t.id+'\')" ontouchstart="touchStart(event,\''+t.id+'\')" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">'+esc(t.title)+'</div>').join('')+'</div>':'';
+}
+function changeMonth(delta){calendarDate.setMonth(calendarDate.getMonth()+delta);renderCalendar()}
+function dragStart(e,id){e.dataTransfer.setData('text/plain',id);e.dataTransfer.effectAllowed='move'}
+function dragEnd(){document.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'))}
+function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drop-target')}
+function dragLeave(e){e.currentTarget.classList.remove('drop-target')}
+function dropTask(e,date){e.preventDefault();const id=e.dataTransfer.getData('text/plain');assignPlanned(id,date)}
+function assignPlanned(id,date){const t=tasks.find(x=>x.id===id);if(!t)return;t.planned=date;save()}
+function touchStart(e,id){if(e.touches.length!==1)return;touchDragId=id;const t=tasks.find(x=>x.id===id);if(!t)return;touchGhost=document.createElement('div');touchGhost.className='touch-ghost';touchGhost.textContent=t.title;document.body.appendChild(touchGhost);moveGhost(e.touches[0]);}
+function moveGhost(t){if(touchGhost){touchGhost.style.left=t.clientX+'px';touchGhost.style.top=t.clientY+'px'}}
+function touchMove(e){if(!touchDragId)return;e.preventDefault();moveGhost(e.touches[0]);touchCalendarMove(e)}
+function touchCalendarMove(e){if(!touchDragId||!e.touches[0])return;const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);document.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'));const day=el&&el.closest('.cal-day[data-date]');if(day)day.classList.add('drop-target')}
+function touchCalendarDrop(e,date){if(!touchDragId)return;const el=document.elementFromPoint(e.changedTouches[0].clientX,e.changedTouches[0].clientY);const day=el&&el.closest('.cal-day[data-date]');if(day){assignPlanned(touchDragId,day.dataset.date)}touchEnd();}
+function touchEnd(){touchDragId=null;if(touchGhost){touchGhost.remove();touchGhost=null}document.querySelectorAll('.drop-target').forEach(x=>x.classList.remove('drop-target'))}
 function render(){
 let open=tasks.filter(t=>!t.done);document.getElementById('openCount').textContent=open.length;document.getElementById('urgentCount').textContent=open.filter(urgent).length;document.getElementById('timeCount').textContent=open.reduce((a,t)=>a+(+t.duration||0),0);
 let list=tasks.filter(t=>{if(filter==='today')return !t.done&&daysUntil(t.due)===0;if(filter==='urgent')return urgent(t);if(filter==='open')return !t.done;return true})
 .sort((a,b)=>(a.done-b.done)||({A:0,B:1,C:2}[a.priority]-{A:0,B:1,C:2}[b.priority])||((daysUntil(a.due))-(daysUntil(b.due))));
-let el=document.getElementById('tasks');el.innerHTML=list.length?list.map(t=>`<div class="task ${t.done?'done':''}"><button class="check" onclick="toggle('${t.id}')">${t.done?'✓':''}</button><div style="flex:1"><div class="title">${esc(t.title)}</div><div class="meta"><span class="pill ${t.priority}">${t.priority}</span>${esc(t.category)} · ${t.duration} Min. · ${dueText(t)}</div>${deadlineHTML(t)}</div><div class="actions"><button class="icon" onclick="requestDelete('${t.id}')" aria-label="Aufgabe löschen">×</button></div></div>`).join(''):'<div class="empty">Noch keine Aufgaben. Füge deine erste Aufgabe hinzu.</div>';
+renderCalendar();
+let el=document.getElementById('tasks');el.innerHTML=list.length?list.map(t=>`<div class="task ${t.done?'done':''}" draggable="true" data-task-id="${t.id}" ondragstart="dragStart(event,'${t.id}')" ondragend="dragEnd()" ontouchstart="touchStart(event,'${t.id}')" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)"><button class="check" onclick="toggle('${t.id}')">${t.done?'✓':''}</button><div style="flex:1"><div class="title">${esc(t.title)}</div><div class="meta"><span class="pill ${t.priority}">${t.priority}</span>${esc(t.category)} · ${t.duration} Min. · ${dueText(t)}</div>${deadlineHTML(t)}</div><div class="actions"><button class="icon" onclick="requestDelete('${t.id}')" aria-label="Aufgabe löschen">×</button></div></div>`).join(''):'<div class="empty">Noch keine Aufgaben. Füge deine erste Aufgabe hinzu.</div>';
 }
 function esc(s){return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function toggle(id){let t=tasks.find(x=>x.id===id);t.done=!t.done;save()}
@@ -120,31 +167,21 @@ let pendingDeleteId=null;
 function requestDelete(id){
  const t=tasks.find(x=>x.id===id); if(!t)return;
  pendingDeleteId=id;
- document.getElementById('deleteQuestion').textContent='„'+t.title+'“ wird dauerhaft entfernt. Dieser Vorgang kann nicht rückgängig gemacht werden.';
- const input=document.getElementById('deleteConfirmText');
- input.value='';
- document.getElementById('deleteFinal').disabled=true;
+ document.getElementById('deleteQuestion').textContent='„'+t.title+'“ wird dauerhaft entfernt. Bist du sicher?';
  document.getElementById('deleteModal').classList.add('show');
- setTimeout(()=>input.focus(),100);
 }
 function closeDeleteModal(){pendingDeleteId=null;document.getElementById('deleteModal').classList.remove('show')}
-document.addEventListener('input',e=>{
- if(e.target.id==='deleteConfirmText'){
-   const t=tasks.find(x=>x.id===pendingDeleteId);
-   document.getElementById('deleteFinal').disabled=!(t && e.target.value.trim()===t.title);
- }
-});
 function confirmDelete(){
  const t=tasks.find(x=>x.id===pendingDeleteId);
- const input=document.getElementById('deleteConfirmText');
- if(!t || input.value.trim()!==t.title)return;
+ if(!t)return;
+ if(!window.confirm('Wirklich endgültig löschen?\n\n„'+t.title+'“ wird dauerhaft entfernt.'))return;
  tasks=tasks.filter(x=>x.id!==pendingDeleteId);
  closeDeleteModal();
  save();
 }
 function openModal(){document.getElementById('modal').classList.add('show');document.getElementById('fTitle').focus()}
 function closeModal(){document.getElementById('modal').classList.remove('show')}
-function saveTask(){let title=document.getElementById('fTitle').value.trim();if(!title)return alert('Bitte eine Aufgabe eingeben.');tasks.push({id:Date.now().toString(),title,priority:document.getElementById('fPriority').value,duration:+document.getElementById('fDuration').value||30,due:document.getElementById('fDue').value,category:document.getElementById('fCategory').value,done:false,createdAt:new Date().toISOString()});save();closeModal();document.getElementById('fTitle').value=''}
+function saveTask(){let title=document.getElementById('fTitle').value.trim();if(!title)return alert('Bitte eine Aufgabe eingeben.');tasks.push({id:Date.now().toString(),title,priority:document.getElementById('fPriority').value,duration:+document.getElementById('fDuration').value||30,planned:document.getElementById('fPlanned').value,due:document.getElementById('fDue').value,category:document.getElementById('fCategory').value,done:false,createdAt:new Date().toISOString()});save();closeModal();document.getElementById('fTitle').value='';document.getElementById('fPlanned').value=''}
 function setFilter(f,b){filter=f;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');render()}
 function suggest(){let mins=+document.getElementById('minutes').value;if(!mins){return}let candidates=tasks.filter(t=>!t.done).sort((a,b)=>(urgent(b)-urgent(a))||({A:0,B:1,C:2}[a.priority]-{A:0,B:1,C:2}[b.priority])||(daysUntil(a.due)-daysUntil(b.due)));let picked=[],sum=0;for(const t of candidates){if(sum+(+t.duration)<=mins){picked.push(t);sum+=+t.duration}}let s=document.getElementById('suggestion');s.innerHTML=picked.length?`<div style="margin-top:14px"><b>Das würde jetzt gut passen:</b><ol>${picked.map(t=>`<li style="margin:8px 0">${esc(t.title)} <span class="meta">(${t.duration} Min., ${dueText(t)})</span></li>`).join('')}</ol><div class="sub">Geplant: ${sum} von ${mins} Minuten.</div></div>`:`<div class="sub" style="margin-top:12px">Keine Kombination passt exakt in ${mins} Minuten. Versuche etwas mehr Zeit oder erledige eine kurze Aufgabe.</div>`}
 render();
