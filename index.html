@@ -64,6 +64,8 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d7dbe1;border-ra
 <script>
 const KEY='mein-aufgabenplaner-v1';
 let tasks=JSON.parse(localStorage.getItem(KEY)||'[]'),filter='all',editTaskId=null,pendingDeleteId=null,notesId=null;
+// Einheitliche Aufgabenquelle: Kalender und Listen arbeiten immer mit demselben Task-Objekt.
+tasks=tasks.map(t=>({...t,id:String(t.id),done:Boolean(t.done)}));
 let calendarDate=new Date();calendarDate.setDate(1);
 let selectedDate=new Date();selectedDate.setHours(0,0,0,0);
 let touch={pending:null,active:false,startX:0,startY:0,lastX:0,lastY:0,timer:null,ghost:null};
@@ -88,7 +90,7 @@ function renderCalendar(){
   const cls=['cal-day',iso===toISO(today)?'today':'',iso===toISO(selectedDate)?'selected':''].filter(Boolean).join(' ');
   const dayTasks=tasks.filter(t=>t.planned===iso);
   h+=`<div class="${cls}" data-date="${iso}" onclick="selectDay('${iso}')" ondragover="allowDrop(event)" ondragenter="dragEnter(event)" ondragleave="dragLeave(event)" ondrop="dropTask(event,'${iso}')"><div class="cal-num">${d}</div>`;
-  dayTasks.slice(0,4).forEach(t=>h+=`<div class="cal-task ${t.done?'done':''}" draggable="true" ondragstart="dragStart(event,'${t.id}')" onclick="event.stopPropagation();toggle('${t.id}')"><button class="cal-check" onclick="event.stopPropagation();toggle('${t.id}')">${t.done?'✓':''}</button><span>${t.time?'<span class="cal-time">'+esc(t.time)+'</span>':''}${esc(t.title)}</span></div>`);
+  dayTasks.slice(0,4).forEach(t=>h+=`<div class="cal-task ${t.done?'done':''}" draggable="true" ondragstart="dragStart(event,'${t.id}')"><button class="cal-check" aria-label="${t.done?'Als offen markieren':'Als erledigt markieren'}" onclick="event.preventDefault();event.stopPropagation();toggleTask('${t.id}')">${t.done?'✓':''}</button><span>${t.time?'<span class="cal-time">'+esc(t.time)+'</span>':''}${esc(t.title)}</span></div>`);
   if(dayTasks.length>4)h+=`<div class="cal-task">+${dayTasks.length-4} weitere</div>`;
   h+='</div>';
  }
@@ -109,7 +111,14 @@ function renderDayView(){
  document.getElementById('dayView').innerHTML=h+'</div>';
 }
 function changeMonth(n){calendarDate.setMonth(calendarDate.getMonth()+n);renderCalendar()}
-function toggle(id){const t=tasks.find(x=>String(x.id)===String(id));if(!t)return;t.done=!t.done;localStorage.setItem(KEY,JSON.stringify(tasks));render()}
+function toggleTask(id){
+ const t=tasks.find(x=>String(x.id)===String(id));
+ if(!t)return;
+ t.done=!t.done;
+ localStorage.setItem(KEY,JSON.stringify(tasks));
+ render();
+}
+function toggle(id){toggleTask(id)}
 function setFilter(f,btn){filter=f;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');render()}
 function toggleMenu(id){document.querySelectorAll('.task-menu').forEach(m=>m.classList.remove('show'));const m=document.getElementById('menu-'+id);if(m)m.classList.toggle('show')}
 document.addEventListener('click',e=>{if(!e.target.closest('.actions'))document.querySelectorAll('.task-menu').forEach(m=>m.classList.remove('show'))});
